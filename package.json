@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
+  },
+  "peerDependencies": {
+    "mobx": "^6.0.0",
+    "yup": "^0.32.00"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "name": "mobx-easy-form",
+  "author": "Mateo Hrastnik",
+  "module": "dist/mobx-easy-form.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/mobx-easy-form.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/mobx-easy-form.esm.js",
+      "limit": "10 KB"
+    }
+  ],
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^6.0.4",
+    "husky": "^7.0.4",
+    "mobx": "^6.3.7",
+    "size-limit": "^6.0.4",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.3.1",
+    "typescript": "^4.4.4",
+    "yup": "^0.32.11"
+  }
+}
