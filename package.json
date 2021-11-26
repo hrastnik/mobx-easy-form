@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple and performant form library built with MobX",
   "keywords": [
     "mobx",
@@ -35,9 +35,9 @@
     "analyze": "size-limit --why"
   },
   "peerDependencies": {
+    "lodash": "^4.0.0",
     "mobx": "^6.0.0",
-    "yup": "^0.32.00",
-    "lodash": "^4.0.0"
+    "yup": "^0.32.00"
   },
   "husky": {
     "hooks": {
