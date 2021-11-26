@@ -1,5 +1,20 @@
 {
   "version": "1.0.0",
+  "description": "Simple and performant form library built with MobX",
+  "keywords": [
+    "mobx",
+    "form",
+    "easy",
+    "react"
+  ],
+  "homepage": "https://github.com/hrastnik/mobx-easy-form",
+  "bugs": {
+    "url": "https://github.com/hrastnik/mobx-easy-form/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hrastnik/mobx-easy-form.git"
+  },
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -21,7 +36,8 @@
   },
   "peerDependencies": {
     "mobx": "^6.0.0",
-    "yup": "^0.32.00"
+    "yup": "^0.32.00",
+    "lodash": "^4.0.0"
   },
   "husky": {
     "hooks": {
@@ -29,7 +45,10 @@
     }
   },
   "name": "mobx-easy-form",
-  "author": "Mateo Hrastnik",
+  "author": {
+    "name": "Mateo Hrastnik",
+    "email": "hrastnikmateo@gmail.com"
+  },
   "module": "dist/mobx-easy-form.esm.js",
   "size-limit": [
     {
