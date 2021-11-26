@@ -63,7 +63,7 @@ export function createField<ValueType = string, ParsedType = string>({
     }
 
     return function validate(value: ValueType) {
-      return { parsed: (value as unknown) as ParsedType, error: undefined };
+      return { parsed: value as unknown as ParsedType, error: undefined };
     };
   }
 

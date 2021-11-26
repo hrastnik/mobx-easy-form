@@ -45,6 +45,7 @@
     "@size-limit/preset-small-lib": "^6.0.4",
     "husky": "^7.0.4",
     "mobx": "^6.3.7",
+    "prettier": "2.5.0",
     "size-limit": "^6.0.4",
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",

@@ -31,7 +31,9 @@ export function createForm({ onSubmit }: CreateFormArgs) {
       return _.some(fields, (field) => field.computed.isDirty);
     },
     get errorList() {
-      return Object.values(fields).map(field => field.computed.error).filter(error => error !== undefined);
+      return Object.values(fields)
+        .map((field) => field.computed.error)
+        .filter((error) => error !== undefined);
     },
     get isError() {
       return _.some(fields, (field) => !!field.computed.error);
