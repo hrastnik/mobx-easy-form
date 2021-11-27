@@ -68,6 +68,7 @@ export function createForm({ onSubmit }: CreateFormArgs) {
       }
 
       if (computed.isError) {
+        state.isSubmitting = false;
         return;
       }
 

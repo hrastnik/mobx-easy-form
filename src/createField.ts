@@ -1,6 +1,6 @@
 import { action, observable } from "mobx";
 import _ from "lodash";
-import * as yup from "yup";
+import type { AnySchema } from "yup";
 
 type ValidationFn<ValueType, ParsedType> = (
   value: ValueType
@@ -11,7 +11,7 @@ type ValidationFn<ValueType, ParsedType> = (
 type CreateFieldArgs<
   ValueType,
   ParsedType = string,
-  YupSchema extends yup.AnySchema = yup.AnySchema
+  YupSchema extends AnySchema = AnySchema
 > = {
   id: string;
   initialValue: ValueType;
@@ -54,7 +54,7 @@ export function createField<ValueType = string, ParsedType = string>({
           );
           return { parsed, error: undefined };
         } catch (error) {
-          if (error instanceof yup.ValidationError) {
+          if (error instanceof Error && error.name === "ValidationError") {
             return { parsed: undefined, error };
           }
           throw error;
@@ -98,7 +98,7 @@ export function createField<ValueType = string, ParsedType = string>({
         return state.errorOverride;
       }
 
-      if (error instanceof yup.ValidationError) {
+      if (error instanceof Error && error.name === "ValidationError") {
         const err = error as any;
         return String(err.message?.value ?? err.message ?? error);
       }
