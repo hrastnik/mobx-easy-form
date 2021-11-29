@@ -304,8 +304,8 @@ Returns a `Field` instance
 | `state.wasEverBlurred`               | string                        | `true` if the field was ever blurred, `false` otherwise                                                |
 | `state.wasEverFocused`               | string                        | `true` if the field was ever focused, `false` otherwise                                                |
 | `computed.error`                     | string \| undefined           | Custom error message set on the field                                                                  |
-| `computed.ifWasEverFocusedThenError` | boolean                       | if the field was ever blurred returns the value of `computed.error`, otherwise returns `undefined`     |
-| `computed.ifWasEverFocusedThenError` | boolean                       | if the field was ever focused returns the value of `computed.error`, otherwise returns `undefined`     |
+| `computed.ifWasEverBlurredThenError` | string \| undefined           | if the field was ever blurred returns the value of `computed.error`, otherwise returns `undefined`     |
+| `computed.ifWasEverFocusedThenError` | string \| undefined           | if the field was ever focused returns the value of `computed.error`, otherwise returns `undefined`     |
 | `computed.isDirty`                   | boolean                       | `true` if value is different from `initialValue`, `false` otherwise                                    |
 | `computed.parsed`                    | any                           | Parsed value of the field. The parsed value returned by `validate` or cast using the validation schema |
 | `actions.onBlur`                     | () => void                    | Sets `state.isFocused` to false. Should be passed to text inputs `onBlur`                              |
