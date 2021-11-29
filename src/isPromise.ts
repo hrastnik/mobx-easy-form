@@ -1,3 +1,5 @@
-export function isPromise(value: any): value is Promise<any> {
-  return Boolean(value && typeof value.then === "function");
+export function isPromise<T, S>(
+  value: PromiseLike<T> | S
+): value is PromiseLike<T> {
+  return Boolean(value && "then" in value && typeof value.then === "function");
 }

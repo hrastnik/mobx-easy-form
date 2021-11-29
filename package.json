@@ -35,7 +35,6 @@
     "analyze": "size-limit --why"
   },
   "peerDependencies": {
-    "lodash": "^4.0.0",
     "mobx": "^6.0.0",
     "yup": "^0.32.00"
   },

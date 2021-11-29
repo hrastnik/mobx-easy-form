@@ -1,7 +1,7 @@
-import _ from "lodash";
 import { action, observable, runInAction } from "mobx";
 import { isPromise } from "./isPromise";
 import type { Field } from "./createField";
+import { mapValues } from "./mapValues";
 
 export type OnSubmitArg = {
   fields: Record<string, Field>;
@@ -28,7 +28,7 @@ export function createForm({ onSubmit }: CreateFormArgs) {
 
   const computed = observable({
     get isDirty() {
-      return _.some(fields, (field) => field.computed.isDirty);
+      return Object.values(fields).some((field) => field.computed.isDirty);
     },
     get errorList() {
       return Object.values(fields)
@@ -36,13 +36,13 @@ export function createForm({ onSubmit }: CreateFormArgs) {
         .filter((error) => error !== undefined);
     },
     get isError() {
-      return _.some(fields, (field) => !!field.computed.error);
+      return Object.values(fields).some((field) => !!field.computed.error);
     },
     get isValid() {
       return !this.isError;
     },
     get valueList() {
-      return String(_.map(fields, (field) => field.state.value));
+      return String(Object.values(fields).map((field) => field.state.value));
     },
 
     get isChangedSinceLastSubmit() {
@@ -74,12 +74,12 @@ export function createForm({ onSubmit }: CreateFormArgs) {
 
       const maybePromise = onSubmit({
         fields,
-        rawValues: _.mapValues(fields, (field) => field.state.value),
-        values: _.mapValues(fields, (field) => field.computed.parsed),
+        rawValues: mapValues(fields, (field) => field.state.value),
+        values: mapValues(fields, (field) => field.computed.parsed),
       });
 
       if (isPromise(maybePromise)) {
-        return maybePromise.finally(() => {
+        return Promise.resolve(maybePromise).finally(() => {
           runInAction(() => {
             state.isSubmitting = false;
           });
@@ -90,6 +90,7 @@ export function createForm({ onSubmit }: CreateFormArgs) {
         });
       }
 
+      [].map;
       return maybePromise;
     }),
   };

@@ -1,5 +1,4 @@
 import { action, observable } from "mobx";
-import _ from "lodash";
 import type { AnySchema } from "yup";
 
 type ValidationFn<ValueType, ParsedType> = (
@@ -88,7 +87,8 @@ export function createField<ValueType = string, ParsedType = string>({
     },
 
     get isDirty() {
-      return !_.isEqual(state.value, initialValue);
+      // TODO: Add ability to provide custom equality function.
+      return state.value !== initialValue;
     },
 
     get error() {
