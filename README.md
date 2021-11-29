@@ -1,16 +1,22 @@
 # MobX Easy Form
 
-Simple and performant form library built with MobX
+Simple and performant form library built with MobX.
+
+Works with React, React Native and any other framework that supports MobX.
 
 ## Motivation
 
-This library is heavily inspired by Formik. I like Formik, but there are some issues with Formik that MobX Easy Form solves.
+This library is heavily inspired by [Formik](https://github.com/formium/formik). I like Formik, but there are some issues with Formik that MobX Easy Form solves.
 
 ### 1. Performace
 
 Forms can get very complicated. Formik can get slow as the form grows as it re-renders the whole form on every keystroke. There are available optimizations but it's complex to setup and can introduce bugs like a field not rendering when it should.
 
 MobX Easy Form solves this issue with MobX. It makes sure to re-render only the components that need to re-render.
+
+You can see the difference in the following GIF. The number of times each component renders is shown below.
+
+![Formik vs MobX Easy Form](./formik-vs-mobx-easy-form.gif)
 
 ### 2. Validation limitations
 
@@ -22,13 +28,13 @@ With MobX Easy Form you define each field separately so you can use one field va
 
 ### Installing the dependencies
 
-MobX Easy Form depends on `mobx`, and if you're using React, you'll also need `mobx-react`. To install these, run
+MobX Easy Form depends on `mobx`, and if you're using React, you'll also need `mobx-react-lite` (or `mobx-react` if you support class components). To install these, run
 
 ```bash
-npm install mobx mobx-react
+npm install mobx mobx-react-lite
 
-# if you use yarn.
-yarn add mobx mobx-react
+# if you use yarn
+yarn add mobx mobx-react-lite
 ```
 
 ### Installing MobX Easy Form
@@ -36,7 +42,7 @@ yarn add mobx mobx-react
 ```bash
 npm install mobx-easy-form
 
-# if you use yarn.
+# if you use yarn
 yarn add mobx-easy-form
 ```
 
@@ -52,7 +58,7 @@ export default observer(function Form() {
   const { form, firstName, lastName, initials, age } = useMemo(() => {
     const form = createForm({
       onSubmit({ values }) {
-        alert("values" + JSON.stringify(values, null, 2));
+        console.log("Values:", values);
       },
     });
 
@@ -184,9 +190,13 @@ export default observer(function Form() {
 });
 ```
 
-## Example on CodeSandbox
+## React Example on CodeSandbox
 
 ### [https://codesandbox.io/s/mobx-easy-form-example-xn3ss](https://codesandbox.io/s/mobx-easy-form-example-xn3ss)
+
+## React Native Example on Expo Snack
+
+### [https://snack.expo.dev/@hrastnik/react-native---mobx-easy-form](https://snack.expo.dev/@hrastnik/react-native---mobx-easy-form)
 
 ## Getting started
 
@@ -293,9 +303,9 @@ Returns a `Form` instance.
 | `id`               | string                                                                                      | required | Unique identifier for the given field. When you add the field to a `form`, you can later access the field in `form.fields.<id>`                                                                                                                                   |
 | `initialValue`     | any                                                                                         | required | The initial value of the field. If you're using TypeScript, note that this field will be used to type the values you can set through `onChange`, so for optional fields consider using a cast to add the `undefined` type. (`initalValue: "" as "" \| undefined`) |
 | `form`             | Form (return value of `createForm`)                                                         | required | The form to which the newly created field should be added.                                                                                                                                                                                                        |
-| `validationSchema` | Yup.ValidationSchema                                                                        | false    | [Yup validation schema](https://github.com/jquense/yup) used to validate the field value. You can only set one of `validationSchema` and `validate`                                                                                                               |
-| `validate`         | (value: any) => { error?: undefined, parsed: any } \| { error: string, parsed?: undefined } | false    | Validation function used to validate and parse the value. It receives the value and must return and object with either `error` or `parsed` set                                                                                                                    |
-| `initialError`     | string                                                                                      | false    | Initial error for the field                                                                                                                                                                                                                                       |
+| `validationSchema` | Yup.ValidationSchema                                                                        | optional | [Yup validation schema](https://github.com/jquense/yup) used to validate the field value. You can only set one of `validationSchema` and `validate`                                                                                                               |
+| `validate`         | (value: any) => { error?: undefined, parsed: any } \| { error: string, parsed?: undefined } | optional | Validation function used to validate and parse the value. It receives the value and must return and object with either `error` or `parsed` set                                                                                                                    |
+| `initialError`     | string                                                                                      | optional | Initial error for the field                                                                                                                                                                                                                                       |
 
 Returns a `Field` instance
 
