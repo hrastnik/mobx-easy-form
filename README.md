@@ -14,23 +14,29 @@ MobX Easy Form solves this issue with MobX. It makes sure to re-render only the 
 
 ### 2. Validation limitations
 
-Formik forces you to define the validationScheme initialValues for all your fields at the same time, which means you can't change the validation logic based on the value of some field.
+Formik forces you to define the `validationScheme` and `initialValues` for all your fields at the same time, which means you can't change the validation logic based on the value of some field.
 
 With MobX Easy Form you define each field separately so you can use one field value to initialize another.
 
 ## Installation
 
-MobX Easy Form depends on MobX so make sure you have it installed (`npm install mobx` or `yarn add mobx`)
+### Installing the dependencies
 
-If you use npm run
+MobX Easy Form depends on `mobx`, and if you're using React, you'll also need `mobx-react`. To install these, run
 
+```bash
+npm install mobx mobx-react
+
+# if you use yarn.
+yarn add mobx mobx-react
 ```
+
+### Installing MobX Easy Form
+
+```bash
 npm install mobx-easy-form
-```
 
-alternatively, if you use yarn
-
-```
+# if you use yarn.
 yarn add mobx-easy-form
 ```
 
