@@ -35,8 +35,7 @@
     "analyze": "size-limit --why"
   },
   "peerDependencies": {
-    "mobx": "^6.0.0",
-    "yup": "^0.32.00"
+    "mobx": "^6.0.0"
   },
   "husky": {
     "hooks": {
