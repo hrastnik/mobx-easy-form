@@ -1,5 +1,7 @@
 # MobX Easy Form
 
+<img src="./mobx-easy-form-logo-wide.png" width="70%" alt="MobX Easy Form" />
+
 Simple and performant form library built with MobX.
 
 Works with React, React Native and any other framework that supports MobX.
@@ -16,8 +18,9 @@ MobX Easy Form solves this issue with MobX. It makes sure to re-render only the 
 
 You can see the difference in the following GIF. The number of times each component renders is shown below.
 
-![Formik vs MobX Easy Form](./formik-vs-mobx-easy-form.gif)
-
+<p align="center">
+<img src="./formik-vs-mobx-easy-form.gif" width="70%" alt="Formik vs MobX Easy Form" />
+</p>
 ### 2. Validation limitations
 
 Formik forces you to define the `validationScheme` and `initialValues` for all your fields at the same time, which means you can't change the validation logic based on the value of some field.
