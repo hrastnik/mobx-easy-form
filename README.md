@@ -21,6 +21,7 @@ You can see the difference in the following GIF. The number of times each compon
 <p align="center">
 <img src="./formik-vs-mobx-easy-form.gif" width="70%" alt="Formik vs MobX Easy Form" />
 </p>
+
 ### 2. Validation limitations
 
 Formik forces you to define the `validationScheme` and `initialValues` for all your fields at the same time, which means you can't change the validation logic based on the value of some field.
