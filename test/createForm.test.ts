@@ -186,9 +186,7 @@ test("Yup validation works", async () => {
     form,
     id: "id",
     initialValue: "",
-    validationSchema: string()
-      .required("Invalid")
-      .oneOf(["YES"], "Invalid"),
+    validationSchema: string().required("Invalid").oneOf(["YES"], "Invalid"),
   });
 
   expect(form.computed.isValid).toBe(false);
@@ -198,4 +196,87 @@ test("Yup validation works", async () => {
   expect(form.computed.isValid).toBe(true);
   expect(form.computed.isError).toBe(false);
   expect(form.computed.errorList).toEqual([]);
+});
+
+test("validate can't be set along with validationSchema", async () => {
+  const form = createForm({ onSubmit() {} });
+  createField({
+    form,
+    id: "id-0",
+    initialValue: "",
+    validate: (value) => ({ error: undefined, parsed: value }),
+    validationSchema: undefined,
+  });
+
+  createField({
+    form,
+    id: "id-1",
+    initialValue: "",
+    validate: undefined,
+    validationSchema: undefined,
+  });
+
+  createField({
+    form,
+    id: "id-2",
+    initialValue: "",
+    // validate: undefined,
+    validationSchema: undefined,
+  });
+
+  // @ts-expect-error
+  createField({
+    form,
+    id: "id-3",
+    initialValue: "",
+    validate: (value) => ({ error: undefined, parsed: value }),
+    validationSchema: string(),
+  });
+
+  createField({
+    form,
+    id: "id-4",
+    initialValue: "",
+    validate: undefined,
+    validationSchema: string(),
+  });
+
+  createField({
+    form,
+    id: "id-5",
+    initialValue: "",
+    // validate: undefined,
+    validationSchema: string(),
+  });
+
+  createField({
+    form,
+    id: "id-6",
+    initialValue: "",
+    validate: (value) => ({ error: undefined, parsed: value }),
+    // validationSchema: undefined,
+  });
+
+  createField({
+    form,
+    id: "id-7",
+    initialValue: "",
+    validate: undefined,
+    // validationSchema: undefined,
+  });
+
+  createField({
+    form,
+    id: "id-8",
+    initialValue: "",
+    // validationSchema: undefined,
+  });
+
+  createField({
+    form,
+    id: "id-9",
+    initialValue: "",
+    // validate: undefined,
+    // validationSchema: undefined,
+  });
 });

@@ -22,8 +22,14 @@ type CreateFieldArgs<
     };
   };
 } & (
-  | { validate?: undefined | ValidationFn<ValueType, ParsedType> }
-  | { validationSchema?: undefined | YupSchema }
+  | {
+      validate?: ValidationFn<ValueType, ParsedType>;
+      validationSchema?: undefined;
+    }
+  | {
+      validate?: undefined;
+      validationSchema?: YupSchema;
+    }
 );
 
 export function createField<ValueType = string, ParsedType = string>({
