@@ -1,5 +1,5 @@
 {
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Simple and performant form library built with MobX",
   "keywords": [
     "mobx",
