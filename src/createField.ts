@@ -10,7 +10,11 @@ type ValidationFn<ValueType, ParsedType> = (
 type CreateFieldArgs<
   ValueType,
   ParsedType = string,
-  YupSchema extends AnySchema = AnySchema
+  YupSchema extends AnySchema<any, any, ParsedType> = AnySchema<
+    any,
+    any,
+    ParsedType
+  >
 > = {
   id: string;
   initialValue: ValueType;
