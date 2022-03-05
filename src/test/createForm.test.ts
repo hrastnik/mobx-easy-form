@@ -1,5 +1,5 @@
-import { createField } from "../src/createField";
-import { createForm } from "../src/createForm";
+import { createField } from "../createField";
+import { createForm } from "../createForm";
 
 import { number, string } from "yup";
 
