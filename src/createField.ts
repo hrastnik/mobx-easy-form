@@ -1,13 +1,13 @@
 import { action, observable } from "mobx";
 import type { AnySchema } from "yup";
 
-type ValidationFn<ValueType, ParsedType> = (
+export type ValidationFn<ValueType, ParsedType> = (
   value: ValueType
 ) =>
   | { error?: undefined; parsed: ParsedType }
   | { error: Error | string; parsed?: undefined };
 
-type CreateFieldArgs<
+export type CreateFieldArgs<
   ValueType,
   ParsedType = string,
   YupSchema extends AnySchema<any, any, ParsedType> = AnySchema<
