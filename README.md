@@ -54,56 +54,51 @@ yarn add mobx-easy-form
 
 ```tsx
 import { createField, createForm } from "mobx-easy-form";
-import { Observer, observer } from "mobx-react";
-import { useMemo } from "react";
+import { Observer, observer, useForm, useField } from "mobx-react";
 import * as yup from "yup";
 
 export default observer(function Form() {
-  const { form, firstName, lastName, initials, age } = useMemo(() => {
-    const form = createForm({
-      onSubmit({ values }) {
-        console.log("Values:", values);
-      },
-    });
+  const form = useForm({
+    onSubmit({ values }) {
+      console.log("Values:", values);
+    },
+  });
 
-    const firstName = createField({
-      id: "firstName",
-      form,
-      initialValue: "",
-    });
+  const firstName = useField({
+    id: "firstName",
+    form,
+    initialValue: "",
+  });
 
-    const lastName = createField({
-      id: "lastName",
-      form,
-      initialValue: "",
-    });
+  const lastName = useField({
+    id: "lastName",
+    form,
+    initialValue: "",
+  });
 
-    const initials = createField({
-      id: "initials",
-      form,
-      initialValue: "",
-      validate(initials) {
-        if (
-          initials.length === 2 &&
-          initials[0] === firstName.state.value?.[0] &&
-          initials[1] === lastName.state.value?.[0]
-        ) {
-          return { error: undefined, parsed: initials };
-        }
+  const initials = useField({
+    id: "initials",
+    form,
+    initialValue: "",
+    validate(initials) {
+      if (
+        initials.length === 2 &&
+        initials[0] === firstName.state.value?.[0] &&
+        initials[1] === lastName.state.value?.[0]
+      ) {
+        return { error: undefined, parsed: initials };
+      }
 
-        return { error: "Wrong initials", parsed: undefined };
-      },
-    });
+      return { error: "Wrong initials", parsed: undefined };
+    },
+  });
 
-    const age = createField<string, number>({
-      id: "age",
-      form,
-      initialValue: "",
-      validationSchema: yup.number(),
-    });
-
-    return { form, firstName, lastName, initials, age };
-  }, []);
+  const age = useField<string, number>({
+    id: "age",
+    form,
+    initialValue: "",
+    validationSchema: yup.number(),
+  });
 
   return (
     <div>
@@ -255,7 +250,7 @@ In the example above, the field state will hold the string value of a number - e
 
 ### IMPORTANT!
 
-> The `createForm` and `createField` functions will re-create the form on each render and you won't be able to change the inputs - so you have to make sure it only gets created once. You should wrap it in `useMemo` or even better - [`useMemoOne` ](https://github.com/alexreardon/use-memo-one)
+> The `createForm` and `createField` functions will re-create the form on each render and you won't be able to change the inputs - so you have to make sure it only gets created once. You should use `useForm` and `useField` which will keep a stable reference to form and field objects.
 
 ## Render
 
