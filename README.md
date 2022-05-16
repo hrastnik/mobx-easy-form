@@ -53,8 +53,8 @@ yarn add mobx-easy-form
 ## Quick start with React
 
 ```tsx
-import { createField, createForm } from "mobx-easy-form";
-import { Observer, observer, useForm, useField } from "mobx-react";
+import { useForm, useField } from "mobx-easy-form";
+import { Observer, observer } from "mobx-react";
 import * as yup from "yup";
 
 export default observer(function Form() {
