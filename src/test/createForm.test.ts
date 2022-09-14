@@ -157,6 +157,34 @@ test("form.computed.dirty works", async () => {
   expect(form.computed.isDirty).toBe(true);
 });
 
+test("form.computed.dirty works with arrays", async () => {
+  const form = createForm({ onSubmit() {} });
+  const field = createField({ form, id: "id", initialValue: [] as string[] });
+
+  expect(form.computed.isDirty).toBe(false);
+  field.state.value.push("A");
+  expect(form.computed.isDirty).toBe(true);
+  field.state.value.pop();
+  expect(form.computed.isDirty).toBe(false);
+  field.actions.onChange(["A"]);
+  expect(form.computed.isDirty).toBe(true);
+  field.actions.onChange([]);
+  expect(form.computed.isDirty).toBe(false);
+});
+
+test("form.computed.dirty works with objects", async () => {
+  const form = createForm({ onSubmit() {} });
+  const field = createField({ form, id: "id", initialValue: { a: 1 } });
+
+  expect(form.computed.isDirty).toBe(false);
+  field.actions.onChange({ a: 1 });
+  expect(form.computed.isDirty).toBe(false);
+  field.actions.onChange({ a: 2 });
+  expect(form.computed.isDirty).toBe(true);
+  field.actions.onChange({ a: 1 });
+  expect(form.computed.isDirty).toBe(false);
+});
+
 test("Custom validation works", async () => {
   const form = createForm({ onSubmit() {} });
   const field = createField({

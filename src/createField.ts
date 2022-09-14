@@ -98,7 +98,7 @@ export function createField<ValueType = string, ParsedType = string>({
 
     get isDirty() {
       // TODO: Add ability to provide custom equality function.
-      return state.value !== initialValue;
+      return JSON.stringify(state.value) !== JSON.stringify(initialValue);
     },
 
     get error() {
