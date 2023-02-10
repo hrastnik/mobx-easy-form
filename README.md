@@ -202,33 +202,33 @@ export default observer(function Form() {
 Create a form and define the `onSubmit` function.
 
 ```ts
-const from = createForm({
+const from = useForm({
   async onSubmit({ values }) {
     console.log(values);
   },
 });
 ```
 
-Create some fields, and add them to the form by passing the created `form` to the `createField` parameter `form`. We also need an `id` and `initialValue`
+Create some fields, and add them to the form by passing the created `form` to the `useField` parameter `form`. We also need an `id` and `initialValue`
 
 ```ts
-const firstName = createField({
+const firstName = useField({
   id: "firstName",
   form,
   initialValue: "",
 });
 ```
 
-The `id` is used to access when accessing the field through the `form`.
+The `id` is used to access the field when through the `form` object.
 
 ```ts
 form.fields.firstName === firstName; // true
 ```
 
-You can pass a validation function to `createField` but MobX Easy Form works really well with [yup validation library](https://github.com/jquense/yup) and it's the recommended approach.
+You can pass a validation function to `useField` but MobX Easy Form works really well with [yup validation library](https://github.com/jquense/yup) and it's the recommended approach.
 
 ```ts
-const age = createField<string, number>({
+const age = useField<string, number>({
   id: "age",
   form,
   initialValue: "",
@@ -239,7 +239,7 @@ const age = createField<string, number>({
 });
 ```
 
-Note that we're using TypeScript here and we're passing 2 types to the `createField` generic. The first type is the type of the input value (the value passed to `initialValue`) and the second type is the output type that our validation function parses.
+Note that we're using TypeScript here and we're passing 2 types to the `useField` generic. The first type is the type of the input value (the value passed to `initialValue`) and the second type is the output type that our validation function parses. For example, if you have a text input used to enter age, the input type would be string since it's a text input, and the output type would be number since the `validationSchema` would parse it to a number.
 
 MobX Easy Form uses the validation function for two things:
 
@@ -250,7 +250,7 @@ In the example above, the field state will hold the string value of a number - e
 
 ### IMPORTANT!
 
-> The `createForm` and `createField` functions will re-create the form on each render and you won't be able to change the inputs - so you have to make sure it only gets created once. You should use `useForm` and `useField` which will keep a stable reference to form and field objects.
+> The `useForm` and `useField` are React hooks that use `createForm` and `createField` and cache the result so that React doesn't re-create the form on each render. In other words `useForm` and `useField` make sure the form and fields only get created once. If you want to re-create the fields you can pass a dependency array as the second parameter to `useForm` and `useFields`.
 
 ## Render
 
@@ -279,7 +279,7 @@ Each field has the `state`,`computed` and `actions` props.
 
 ## API
 
-### `createForm`
+### `useForm` / `createForm`
 
 | parameter  | type                         | required | description                                                                              |
 | ---------- | ---------------------------- | -------- | ---------------------------------------------------------------------------------------- |
@@ -287,7 +287,7 @@ Each field has the `state`,`computed` and `actions` props.
 
 Returns a `Form` instance.
 
-### OnSubmitArg
+### `OnSubmitArg`
 
 | parameter   | type                   | description                                                                                                                                         |
 | ----------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -295,7 +295,7 @@ Returns a `Form` instance.
 | `rawValues` | Record<string, any>;   | An object containing all the raw values from all the fields in the form.                                                                            |
 | `values`    | Record<string, any>;   | An object containing all the parsed values (returned from the `validate` or validated using the validation schema) from all the fields in the form. |
 
-### `createField`
+### `useField` / `createField`
 
 | parameter          | type                                                                                        | required | description                                                                                                                                                                                                                                                       |
 | ------------------ | ------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

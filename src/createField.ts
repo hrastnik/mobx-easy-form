@@ -1,21 +1,16 @@
 import { action, observable } from "mobx";
-import type { AnySchema } from "yup";
 
-export type ValidationFn<ValueType, ParsedType> = (
+export type ValidationFn<ValueType, ParsedType = ValueType> = (
   value: ValueType
 ) =>
   | { error?: undefined; parsed: ParsedType }
   | { error: Error | string; parsed?: undefined };
 
-export type CreateFieldArgs<
-  ValueType,
-  ParsedType = string,
-  YupSchema extends AnySchema<any, any, ParsedType> = AnySchema<
-    any,
-    any,
-    ParsedType
-  >
-> = {
+type ValidationSchema<ParsedType> = {
+  validateSync(value: any, options: { abortEarly: boolean }): ParsedType;
+};
+
+export type CreateFieldArgs<ValueType, ParsedType = ValueType> = {
   id: string;
   initialValue: ValueType;
   initialError?: undefined | string;
@@ -27,16 +22,20 @@ export type CreateFieldArgs<
   };
 } & (
   | {
-      validate?: ValidationFn<ValueType, ParsedType>;
+      validate?: undefined;
+      validationSchema?: undefined;
+    }
+  | {
+      validate: ValidationFn<ValueType, ParsedType>;
       validationSchema?: undefined;
     }
   | {
       validate?: undefined;
-      validationSchema?: YupSchema;
+      validationSchema: ValidationSchema<ParsedType> | undefined;
     }
 );
 
-export function createField<ValueType = string, ParsedType = string>({
+export function createField<ValueType = any, ParsedType = ValueType>({
   id,
   initialValue,
   initialError,
@@ -52,13 +51,13 @@ export function createField<ValueType = string, ParsedType = string>({
       "validationSchema" in validationProps &&
       validationProps.validationSchema
     ) {
-      return function validate(value: ValueType | string) {
+      return function validate(value: ValueType) {
         if (!validationProps.validationSchema)
           throw new Error("Missing validation schema");
 
         try {
           const parsed = validationProps.validationSchema.validateSync(
-            value === "" ? undefined : value,
+            (value as any) === "" ? undefined : value,
             { abortEarly: true }
           );
           return { parsed, error: undefined };
@@ -89,11 +88,11 @@ export function createField<ValueType = string, ParsedType = string>({
 
   const computed = observable({
     get parsed(): ParsedType | undefined {
-      const { error, parsed } = runValidation(state.value);
+      const result = runValidation(state.value);
 
-      if (error) return undefined;
+      if (result.error) return undefined;
 
-      return parsed;
+      return result.parsed;
     },
 
     get isDirty() {
@@ -161,7 +160,7 @@ export function createField<ValueType = string, ParsedType = string>({
   return field;
 }
 
-export interface Field<ValueType = string, ParsedType = string> {
+export interface Field<ValueType, ParsedType = ValueType> {
   state: {
     id: string;
     errorOverride: undefined | string;
@@ -179,7 +178,7 @@ export interface Field<ValueType = string, ParsedType = string> {
   };
   actions: {
     onFocus(): void;
-    onChange(value: ValueType | undefined): void;
+    onChange(value: ValueType): void;
     onBlur(): void;
     setError(value: string | undefined): void;
   };

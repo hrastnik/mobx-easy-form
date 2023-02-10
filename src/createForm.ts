@@ -4,7 +4,7 @@ import type { Field } from "./createField";
 import { mapValues } from "./mapValues";
 
 export type OnSubmitArg = {
-  fields: Record<string, Field>;
+  fields: Record<string, Field<any>>;
   rawValues: Record<string, any>;
   values: Record<string, any>;
 };
@@ -18,7 +18,7 @@ export type CreateFormArgs = {
 export type Form = ReturnType<typeof createForm>;
 
 export function createForm({ onSubmit }: CreateFormArgs) {
-  const fields = {} as Record<string, Field>;
+  const fields = {} as Record<string, Field<any>>;
 
   const state = observable({
     isSubmitting: false,
@@ -52,7 +52,7 @@ export function createForm({ onSubmit }: CreateFormArgs) {
   });
 
   const actions = {
-    add(field: Field) {
+    add(field: Field<any>) {
       fields[field.state.id] = field;
     },
 

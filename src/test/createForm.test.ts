@@ -160,7 +160,8 @@ test("form.computed.dirty works", async () => {
 test("form.computed.dirty works with arrays", async () => {
   const form = createForm({ onSubmit() {} });
   const field = createField({ form, id: "id", initialValue: [] as string[] });
-
+  field.state.value;
+  field.computed.parsed;
   expect(form.computed.isDirty).toBe(false);
   field.state.value.push("A");
   expect(form.computed.isDirty).toBe(true);
