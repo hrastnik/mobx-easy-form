@@ -18,7 +18,7 @@ export type CreateFormArgs = {
 export type Form = ReturnType<typeof createForm>;
 
 export function createForm({ onSubmit }: CreateFormArgs) {
-  const fields = {} as Record<string, Field<any>>;
+  const fields = observable({}) as Record<string, Field<any>>;
 
   const state = observable({
     isSubmitting: false,
