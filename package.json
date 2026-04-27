@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hrastnik/mobx-easy-form.git"
+    "url": "git+https://github.com/hrastnik/mobx-easy-form.git"
   },
   "license": "MIT",
   "author": {
