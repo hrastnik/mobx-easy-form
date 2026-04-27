@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useField } from "../useField";
 import { useForm } from "../useForm";
 
 test("form.onSubmit captures values correctly", () => {
-  const log = jest.fn();
+  const log = vi.fn();
   render(<Form log={log} />);
 
   fireEvent.click(screen.getByText("inc"));

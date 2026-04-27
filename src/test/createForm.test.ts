@@ -4,7 +4,7 @@ import { createForm } from "../createForm";
 import { number, string } from "yup";
 
 test("create a form an submit", () => {
-  const onSubmit = jest.fn();
+  const onSubmit = vi.fn();
 
   const form = createForm({ onSubmit });
   form.actions.submit();
@@ -160,8 +160,8 @@ test("form.computed.dirty works", async () => {
 test("form.computed.dirty works with arrays", async () => {
   const form = createForm({ onSubmit() {} });
   const field = createField({ form, id: "id", initialValue: [] as string[] });
-  field.state.value;
-  field.computed.parsed;
+  void field.state.value;
+  void field.computed.parsed;
   expect(form.computed.isDirty).toBe(false);
   field.state.value.push("A");
   expect(form.computed.isDirty).toBe(true);

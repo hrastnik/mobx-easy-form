@@ -1,6 +1,12 @@
 export { createForm } from "./createForm";
 export { createField } from "./createField";
-export type { CreateFieldArgs, Field, ValidationFn } from "./createField";
+export type {
+  CreateFieldArgs,
+  Field,
+  ValidationFn,
+  ValidationSchema,
+  InferParsed,
+} from "./createField";
 export type {
   CreateFormArgs,
   Form,

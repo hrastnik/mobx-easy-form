@@ -1,36 +1,23 @@
-import React from "react";
-import { useMemoOne } from "use-memo-one";
-import { createForm, CreateFormArgs } from "./createForm";
+import { useCallback, useLayoutEffect, useRef } from "react";
+import { useMemoOne } from "./useMemoOne";
+import { createForm, type CreateFormArgs, type Form } from "./createForm";
 
-type UseEventHandler<Args extends any[], ReturnValue> = (
-  ...args: Args
-) => ReturnValue;
-
-function useEvent<Args extends any[], ReturnValue>(
-  handler: UseEventHandler<Args, ReturnValue>
+function useEvent<Args extends unknown[], ReturnValue>(
+  handler: (...args: Args) => ReturnValue,
 ) {
-  const handlerRef = React.useRef<UseEventHandler<Args, ReturnValue> | null>(
-    null
-  );
+  const handlerRef = useRef<(...args: Args) => ReturnValue>(handler);
 
-  React.useLayoutEffect(() => {
+  useLayoutEffect(() => {
     handlerRef.current = handler;
   });
 
-  return React.useCallback((...args: Args) => {
-    const fn = handlerRef.current!;
-    return fn(...args);
-  }, []);
+  return useCallback((...args: Args) => handlerRef.current(...args), []);
 }
 
-export function useForm(args: CreateFormArgs, deps: any[] = []) {
+export function useForm(
+  args: CreateFormArgs,
+  deps: ReadonlyArray<unknown> = [],
+): Form {
   const onSubmit = useEvent(args.onSubmit);
-  return useMemoOne(
-    () =>
-      createForm({
-        ...args,
-        onSubmit,
-      }),
-    deps
-  );
+  return useMemoOne(() => createForm({ ...args, onSubmit }), deps);
 }

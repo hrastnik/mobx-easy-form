@@ -1,11 +1,15 @@
 {
-  "version": "2.0.1",
+  "name": "mobx-easy-form",
+  "version": "3.0.0",
   "description": "Simple and performant form library built with MobX",
   "keywords": [
     "mobx",
     "form",
     "easy",
-    "react"
+    "react",
+    "zod",
+    "yup",
+    "standard-schema"
   ],
   "homepage": "https://github.com/hrastnik/mobx-easy-form",
   "bugs": {
@@ -16,65 +20,65 @@
     "url": "https://github.com/hrastnik/mobx-easy-form.git"
   },
   "license": "MIT",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "author": {
+    "name": "Mateo Hrastnik",
+    "email": "hrastnikmateo@gmail.com"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
   "files": [
     "dist",
     "src"
   ],
   "engines": {
-    "node": ">=10"
+    "node": ">=22"
   },
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
-    "size": "size-limit",
-    "analyze": "size-limit --why"
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "peerDependencies": {
-    "mobx": ">=4.0.0",
-    "react": ">=16.0.0"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
-  "name": "mobx-easy-form",
-  "author": {
-    "name": "Mateo Hrastnik",
-    "email": "hrastnikmateo@gmail.com"
-  },
-  "module": "dist/mobx-easy-form.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/mobx-easy-form.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/mobx-easy-form.esm.js",
-      "limit": "10 KB"
-    }
-  ],
-  "devDependencies": {
-    "@size-limit/preset-small-lib": "^6.0.4",
-    "@testing-library/react": "^13.2.0",
-    "@types/react": "^18.0.9",
-    "husky": "^7.0.4",
-    "mobx": "^6.3.7",
-    "prettier": "2.5.0",
-    "react": "^18.1.0",
-    "react-dom": "^18.1.0",
-    "size-limit": "^6.0.4",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.5.0",
-    "typescript": "^4.9.5",
-    "yup": ">=0.30.0"
+    "mobx": ">=6.0.0",
+    "react": ">=19.0.0"
   },
   "dependencies": {
-    "use-memo-one": ">=1.0.0"
+    "@standard-schema/spec": "^1.1.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "husky": "^9.1.0",
+    "jsdom": "^29.0.0",
+    "mobx": "^6.15.0",
+    "oxlint": "^1.61.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsdown": "^0.21.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0",
+    "yup": "^1.7.0",
+    "zod": "^4.3.0"
   }
 }

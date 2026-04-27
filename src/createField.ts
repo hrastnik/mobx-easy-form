@@ -1,4 +1,5 @@
 import { action, observable } from "mobx";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 export type ValidationFn<ValueType, ParsedType = ValueType> = (
   value: ValueType
@@ -6,76 +7,85 @@ export type ValidationFn<ValueType, ParsedType = ValueType> = (
   | { error?: undefined; parsed: ParsedType }
   | { error: Error | string; parsed?: undefined };
 
-type ValidationSchema<ParsedType> = {
-  validateSync(value: any, options: { abortEarly: boolean }): ParsedType;
+type YupLikeSchema<ParsedType> = {
+  validateSync(
+    value: unknown,
+    options?: { abortEarly?: boolean }
+  ): ParsedType;
 };
 
-export type CreateFieldArgs<ValueType, ParsedType = ValueType> = {
+export type ValidationSchema<ParsedType = unknown> =
+  | StandardSchemaV1<unknown, ParsedType>
+  | YupLikeSchema<ParsedType>;
+
+export type InferParsed<Schema, Fallback> =
+  Schema extends StandardSchemaV1<unknown, infer Out>
+    ? Out
+    : Schema extends YupLikeSchema<infer P>
+      ? P
+      : Fallback;
+
+export type CreateFieldArgs<
+  ValueType,
+  ParsedType = ValueType,
+  Schema extends ValidationSchema<ParsedType> | undefined =
+    | ValidationSchema<ParsedType>
+    | undefined,
+> = {
   id: string;
   initialValue: ValueType;
-  initialError?: undefined | string;
+  initialError?: string | undefined;
   form: {
     actions: {
-      add(field: any): any;
-      submit(): any;
+      add(field: Field<any, any>): void;
+      submit(): unknown;
     };
   };
 } & (
-  | {
-      validate?: undefined;
-      validationSchema?: undefined;
-    }
+  | { validate?: undefined; validationSchema?: undefined }
   | {
       validate: ValidationFn<ValueType, ParsedType>;
       validationSchema?: undefined;
     }
-  | {
-      validate?: undefined;
-      validationSchema: ValidationSchema<ParsedType> | undefined;
-    }
+  | { validate?: undefined; validationSchema: Schema }
 );
 
-export function createField<ValueType = any, ParsedType = ValueType>({
-  id,
-  initialValue,
-  initialError,
-  form,
-  ...validationProps
-}: CreateFieldArgs<ValueType, ParsedType>): Field<ValueType, ParsedType> {
-  function getValidateFunction(): ValidationFn<ValueType, ParsedType> {
-    if ("validate" in validationProps && validationProps.validate) {
-      return validationProps.validate;
-    }
+function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
+  return (
+    typeof schema === "object" && schema !== null && "~standard" in schema
+  );
+}
 
-    if (
-      "validationSchema" in validationProps &&
-      validationProps.validationSchema
-    ) {
-      return function validate(value: ValueType) {
-        if (!validationProps.validationSchema)
-          throw new Error("Missing validation schema");
+function isYupLikeSchema<T>(schema: unknown): schema is YupLikeSchema<T> {
+  return (
+    typeof schema === "object" &&
+    schema !== null &&
+    "validateSync" in schema &&
+    typeof (schema as { validateSync: unknown }).validateSync === "function"
+  );
+}
 
-        try {
-          const parsed = validationProps.validationSchema.validateSync(
-            (value as any) === "" ? undefined : value,
-            { abortEarly: true }
-          );
-          return { parsed, error: undefined };
-        } catch (error) {
-          if (error instanceof Error && error.name === "ValidationError") {
-            return { parsed: undefined, error };
-          }
-          throw error;
-        }
-      };
-    }
+export function createField<
+  ValueType,
+  Schema extends ValidationSchema<unknown> | undefined = undefined,
+  ParsedType = InferParsed<Schema, ValueType>,
+>(
+  args: CreateFieldArgs<
+    ValueType,
+    ParsedType,
+    Schema extends ValidationSchema<ParsedType> ? Schema : undefined
+  >
+): Field<ValueType, ParsedType> {
+  const { id, initialValue, initialError, form } = args;
+  const validate = args.validate;
+  const validationSchema = args.validationSchema as
+    | ValidationSchema<ParsedType>
+    | undefined;
 
-    return function validate(value: ValueType) {
-      return { parsed: value as unknown as ParsedType, error: undefined };
-    };
-  }
-
-  const runValidation = getValidateFunction();
+  const runValidation = getValidateFunction<ValueType, ParsedType>(
+    validate,
+    validationSchema
+  );
 
   const state = observable({
     id,
@@ -89,18 +99,15 @@ export function createField<ValueType = any, ParsedType = ValueType>({
   const computed = observable({
     get parsed(): ParsedType | undefined {
       const result = runValidation(state.value);
-
       if (result.error) return undefined;
-
       return result.parsed;
     },
 
     get isDirty() {
-      // TODO: Add ability to provide custom equality function.
       return JSON.stringify(state.value) !== JSON.stringify(initialValue);
     },
 
-    get error() {
+    get error(): string | undefined {
       const { error } = runValidation(state.value);
 
       if (state.errorOverride) {
@@ -108,8 +115,17 @@ export function createField<ValueType = any, ParsedType = ValueType>({
       }
 
       if (error instanceof Error && error.name === "ValidationError") {
-        const err = error as any;
-        return String(err.message?.value ?? err.message ?? error);
+        const msg: unknown = (error as { message: unknown }).message;
+        if (
+          msg !== null &&
+          typeof msg === "object" &&
+          "value" in msg &&
+          (msg as { value: unknown }).value !== undefined
+        ) {
+          return String((msg as { value: unknown }).value);
+        }
+        if (typeof msg === "string") return msg;
+        return String(error);
       }
 
       if (error instanceof Error) {
@@ -119,13 +135,13 @@ export function createField<ValueType = any, ParsedType = ValueType>({
       return error;
     },
 
-    get ifWasEverFocusedThenError() {
+    get ifWasEverFocusedThenError(): string | undefined {
       if (!state.wasEverFocused) return undefined;
       if (!computed.error) return undefined;
       return String(computed.error);
     },
 
-    get ifWasEverBlurredThenError() {
+    get ifWasEverBlurredThenError(): string | undefined {
       if (!state.wasEverBlurred) return undefined;
       if (!computed.error) return undefined;
       return String(computed.error);
@@ -153,11 +169,63 @@ export function createField<ValueType = any, ParsedType = ValueType>({
     }),
   };
 
-  const field = { state, computed, actions };
+  const field: Field<ValueType, ParsedType> = { state, computed, actions };
 
   form.actions.add(field);
 
   return field;
+}
+
+function getValidateFunction<ValueType, ParsedType>(
+  validate: ValidationFn<ValueType, ParsedType> | undefined,
+  validationSchema: ValidationSchema<ParsedType> | undefined
+): ValidationFn<ValueType, ParsedType> {
+  if (validate) return validate;
+
+  if (validationSchema) {
+    // Prefer Yup's `validateSync` when available — it's guaranteed sync,
+    // while Standard Schema's `validate` may return a Promise (Yup itself
+    // implements Standard Schema in async mode).
+    if (isYupLikeSchema<ParsedType>(validationSchema)) {
+      const schema = validationSchema;
+      return function validateWithYup(value: ValueType) {
+        try {
+          const parsed = schema.validateSync(value, { abortEarly: true });
+          return { parsed, error: undefined };
+        } catch (error) {
+          if (error instanceof Error && error.name === "ValidationError") {
+            return { parsed: undefined, error };
+          }
+          throw error;
+        }
+      };
+    }
+
+    if (isStandardSchema(validationSchema)) {
+      const schema = validationSchema;
+      return function validateWithStandardSchema(value: ValueType) {
+        const result = schema["~standard"].validate(value);
+        if (result instanceof Promise) {
+          throw new TypeError(
+            "mobx-easy-form: Standard Schema async validation is not supported. Use a synchronous schema."
+          );
+        }
+        if (result.issues) {
+          const message = result.issues[0]?.message ?? "Invalid";
+          return { parsed: undefined, error: message };
+        }
+        return { parsed: result.value as ParsedType, error: undefined };
+      };
+    }
+
+    throw new TypeError(
+      "mobx-easy-form: validationSchema must implement Standard Schema or expose a `validateSync` method (Yup-like)."
+    );
+  }
+
+  return function passthrough(value: ValueType) {
+    return { parsed: value as unknown as ParsedType, error: undefined };
+  };
 }
 
 export interface Field<ValueType, ParsedType = ValueType> {

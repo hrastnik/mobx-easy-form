@@ -4,12 +4,12 @@ import type { Field } from "./createField";
 import { mapValues } from "./mapValues";
 
 export type OnSubmitArg = {
-  fields: Record<string, Field<any>>;
-  rawValues: Record<string, any>;
-  values: Record<string, any>;
+  fields: Record<string, Field<unknown>>;
+  rawValues: Record<string, unknown>;
+  values: Record<string, unknown>;
 };
 
-export type OnSubmitFn = (props: OnSubmitArg) => any;
+export type OnSubmitFn = (props: OnSubmitArg) => unknown;
 
 export type CreateFormArgs = {
   onSubmit: OnSubmitFn;
@@ -18,7 +18,7 @@ export type CreateFormArgs = {
 export type Form = ReturnType<typeof createForm>;
 
 export function createForm({ onSubmit }: CreateFormArgs) {
-  const fields = observable({}) as Record<string, Field<any>>;
+  const fields = observable({}) as Record<string, Field<unknown>>;
 
   const state = observable({
     isSubmitting: false,
@@ -52,7 +52,7 @@ export function createForm({ onSubmit }: CreateFormArgs) {
   });
 
   const actions = {
-    add(field: Field<any>) {
+    add(field: Field<unknown>) {
       fields[field.state.id] = field;
     },
 
@@ -84,13 +84,12 @@ export function createForm({ onSubmit }: CreateFormArgs) {
             state.isSubmitting = false;
           });
         });
-      } else {
-        runInAction(() => {
-          state.isSubmitting = false;
-        });
       }
 
-      [].map;
+      runInAction(() => {
+        state.isSubmitting = false;
+      });
+
       return maybePromise;
     }),
   };

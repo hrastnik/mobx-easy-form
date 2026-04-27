@@ -55,7 +55,7 @@ yarn add mobx-easy-form
 ```tsx
 import { useForm, useField } from "mobx-easy-form";
 import { Observer, observer } from "mobx-react";
-import * as yup from "yup";
+import { z } from "zod";
 
 export default observer(function Form() {
   const form = useForm({
@@ -93,11 +93,12 @@ export default observer(function Form() {
     },
   });
 
-  const age = useField<string, number>({
+  // Parsed type (number) is inferred from the schema. No generics needed.
+  const age = useField({
     id: "age",
     form,
     initialValue: "",
-    validationSchema: yup.number(),
+    validationSchema: z.coerce.number(),
   });
 
   return (
@@ -225,28 +226,48 @@ The `id` is used to access the field when through the `form` object.
 form.fields.firstName === firstName; // true
 ```
 
-You can pass a validation function to `useField` but MobX Easy Form works really well with [yup validation library](https://github.com/jquense/yup) and it's the recommended approach.
+You can pass a validation function to `useField`, or use any validator that implements the [Standard Schema](https://standardschema.dev) spec — including [Zod](https://zod.dev), [Valibot](https://valibot.dev), and [ArkType](https://arktype.io). [Yup](https://github.com/jquense/yup) is also supported via its `validateSync` interface.
+
+### Using Zod (or any Standard Schema validator)
 
 ```ts
-const age = useField<string, number>({
+import { z } from "zod";
+
+const age = useField({
   id: "age",
   form,
   initialValue: "",
-  validationSchema: yup
-    .number()
+  validationSchema: z.coerce.number().min(0, "Age must be positive"),
+});
+```
+
+The library infers the input type from `initialValue` and the parsed/output type from `validationSchema`, so you usually don't need explicit generics. In this example `age.state.value` is `string` and `age.computed.parsed` is `number`.
+
+### Using Yup
+
+```ts
+import { number } from "yup";
+
+const age = useField({
+  id: "age",
+  form,
+  initialValue: "",
+  validationSchema: number()
     .typeError("Age should be a number")
     .required("Age is required"),
 });
 ```
-
-Note that we're using TypeScript here and we're passing 2 types to the `useField` generic. The first type is the type of the input value (the value passed to `initialValue`) and the second type is the output type that our validation function parses. For example, if you have a text input used to enter age, the input type would be string since it's a text input, and the output type would be number since the `validationSchema` would parse it to a number.
 
 MobX Easy Form uses the validation function for two things:
 
 1. To check if the value is in the right format.
 2. To parse the value and convert it to something usable.
 
-In the example above, the field state will hold the string value of a number - e.g. `"42"`, but yup will convert it to a number `42` that we can access through `age.computed.parsed` and is also the value we get in the `onSubmit({ values })`
+In the example above, the field state will hold the string value of a number - e.g. `"42"`, but the schema will convert it to a number `42` that we can access through `age.computed.parsed` and is also the value we get in `onSubmit({ values })`.
+
+### Synchronous validation only
+
+Validation runs inside MobX computed values, so it must be synchronous. If a Standard Schema validator returns a `Promise` (for example, a Zod schema with `.refine(async ...)`), accessing `field.computed.parsed` or `field.computed.error` will throw. For async checks (e.g. server-side uniqueness), run them at the application level and call `field.actions.setError(...)` with the result.
 
 ### IMPORTANT!
 
@@ -302,7 +323,7 @@ Returns a `Form` instance.
 | `id`               | string                                                                                      | required | Unique identifier for the given field. When you add the field to a `form`, you can later access the field in `form.fields.<id>`                                                                                                                                   |
 | `initialValue`     | any                                                                                         | required | The initial value of the field. If you're using TypeScript, note that this field will be used to type the values you can set through `onChange`, so for optional fields consider using a cast to add the `undefined` type. (`initalValue: "" as "" \| undefined`) |
 | `form`             | Form (return value of `createForm`)                                                         | required | The form to which the newly created field should be added.                                                                                                                                                                                                        |
-| `validationSchema` | Yup.ValidationSchema                                                                        | optional | [Yup validation schema](https://github.com/jquense/yup) used to validate the field value. You can only set one of `validationSchema` and `validate`                                                                                                               |
+| `validationSchema` | StandardSchemaV1 \| Yup.ValidationSchema                                                    | optional | A schema used to validate and parse the field value. Accepts any [Standard Schema](https://standardschema.dev) validator (Zod, Valibot, ArkType, etc.) or a [Yup](https://github.com/jquense/yup) schema. You can only set one of `validationSchema` and `validate`. |
 | `validate`         | (value: any) => { error?: undefined, parsed: any } \| { error: string, parsed?: undefined } | optional | Validation function used to validate and parse the value. It receives the value and must return and object with either `error` or `parsed` set                                                                                                                    |
 | `initialError`     | string                                                                                      | optional | Initial error for the field                                                                                                                                                                                                                                       |
 
