@@ -3,13 +3,19 @@ export { createField } from "./createField";
 export type {
   CreateFieldArgs,
   Field,
+  FieldParsed,
+  InferParsed,
+  InferValidateParsed,
+  LooseValidationFn,
   ValidationFn,
   ValidationSchema,
-  InferParsed,
 } from "./createField";
 export type {
   CreateFormArgs,
+  FieldRawValues,
+  FieldValues,
   Form,
+  FormFields,
   OnSubmitArg,
   OnSubmitFn,
 } from "./createForm";

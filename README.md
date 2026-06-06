@@ -58,27 +58,16 @@ import { Observer, observer } from "mobx-react";
 import { z } from "zod";
 
 export default observer(function Form() {
-  const form = useForm({
-    onSubmit({ values }) {
-      console.log("Values:", values);
-    },
-  });
-
+  // 1. Define each field on its own.
   const firstName = useField({
-    id: "firstName",
-    form,
     initialValue: "",
   });
 
   const lastName = useField({
-    id: "lastName",
-    form,
     initialValue: "",
   });
 
   const initials = useField({
-    id: "initials",
-    form,
     initialValue: "",
     validate(initials) {
       if (
@@ -95,10 +84,17 @@ export default observer(function Form() {
 
   // Parsed type (number) is inferred from the schema. No generics needed.
   const age = useField({
-    id: "age",
-    form,
     initialValue: "",
     validationSchema: z.coerce.number(),
+  });
+
+  // 2. Collect the fields into a form. The keys you choose here become the
+  //    keys of `values`, fully typed: values.age is `number`, the rest `string`.
+  const form = useForm({
+    fields: { firstName, lastName, initials, age },
+    onSubmit({ values }) {
+      console.log("Values:", values);
+    },
   });
 
   return (
@@ -190,6 +186,90 @@ export default observer(function Form() {
 });
 ```
 
+## Migrating to V4
+
+V4 changes how fields and forms are connected so that `onSubmit`'s `values` (and `rawValues`, and `fields`) are **fully typed automatically** — no generics, no manual type declarations.
+
+### What changed
+
+In V3 you created the form first, then each field registered itself into the form by receiving `form` and an `id`. The form had no idea what fields it would end up with, so `values` was `Record<string, unknown>`.
+
+In V4 you do the opposite: create the fields first, then pass them to the form as a `fields` record. The keys of that record become the keys of `values`, and their types are inferred from each field.
+
+| V3 | V4 |
+| --- | --- |
+| `createForm({ onSubmit })` first, fields self-register | Fields first, then `createForm({ fields, onSubmit })` |
+| `createField({ id, form, initialValue })` | `createField({ initialValue })` — no `id`, no `form` |
+| Field key comes from `id` | Field key comes from the `fields` record key |
+| `form.actions.add(field)` | **removed** — pass fields to `createForm` instead |
+| `field.state.id` | **removed** |
+| `values` is `Record<string, unknown>` | `values` is fully typed from the field record |
+
+### Before (V3)
+
+```ts
+const form = useForm({
+  onSubmit({ values }) {
+    // values.age is `unknown`
+    console.log(values);
+  },
+});
+
+const name = useField({ id: "name", form, initialValue: "" });
+const age = useField({
+  id: "age",
+  form,
+  initialValue: "",
+  validationSchema: z.coerce.number(),
+});
+```
+
+### After (V4)
+
+```ts
+const name = useField({ initialValue: "" });
+const age = useField({
+  initialValue: "",
+  validationSchema: z.coerce.number(),
+});
+
+const form = useForm({
+  fields: { name, age },
+  onSubmit({ values }) {
+    values.name; // string
+    values.age; // number
+  },
+});
+```
+
+### Step-by-step
+
+1. **Move field creation above the form.** Fields no longer need the `form`, so create them first.
+2. **Remove `form` and `id` from every `createField` / `useField` call.** The record key replaces `id`.
+3. **Add a `fields` record to `createForm` / `useForm`.** Use the names you previously passed as `id` as the record keys: `fields: { name, age }`.
+4. **Replace `form.actions.add(field)` calls** — there is no `add` anymore; everything is passed up front via `fields`.
+5. **Replace any `field.state.id` usage.** The id no longer exists on the field; use the key under which you stored it in the form.
+
+> Note: the field set is now **closed** — it's whatever you pass to `createForm`. There is no runtime `add`/`remove`. This is what makes `values` fully typed. Dynamic forms (e.g. a variable number of rows) are intended to be served by a future `createFieldArray` primitive that nests as a single entry in the record.
+
+### Typed `values`
+
+`values.<key>` is typed as the field's **parsed/output** type, and `rawValues.<key>` as its **input** type:
+
+```ts
+const age = useField({ initialValue: "", validationSchema: z.coerce.number() });
+
+const form = useForm({
+  fields: { age },
+  onSubmit({ values, rawValues }) {
+    values.age; // number  (parsed output)
+    rawValues.age; // string  (raw input held in state.value)
+  },
+});
+```
+
+`onSubmit` only runs when the form is valid, so `values.<key>` drops the "failed validation" `undefined` and gives you the clean parsed type. If a field's output type is *genuinely* optional (e.g. its schema/validate can return `undefined` as a valid result), that `undefined` is preserved.
+
 ## React Example on CodeSandbox
 
 ### [https://codesandbox.io/s/mobx-easy-form-example-xn3ss](https://codesandbox.io/s/mobx-easy-form-example-xn3ss)
@@ -200,30 +280,45 @@ export default observer(function Form() {
 
 ## Getting started
 
-Create a form and define the `onSubmit` function.
-
-```ts
-const from = useForm({
-  async onSubmit({ values }) {
-    console.log(values);
-  },
-});
-```
-
-Create some fields, and add them to the form by passing the created `form` to the `useField` parameter `form`. We also need an `id` and `initialValue`
+First create your fields. Each field is a standalone object — you only need an `initialValue`.
 
 ```ts
 const firstName = useField({
-  id: "firstName",
-  form,
   initialValue: "",
 });
 ```
 
-The `id` is used to access the field when through the `form` object.
+Then create the form, passing all your fields as a record. The **keys you pick** here are how you'll access the fields later, and they're also what drives the type inference for `onSubmit`.
+
+```ts
+const form = useForm({
+  fields: { firstName },
+  async onSubmit({ values }) {
+    // `values` is fully typed from the field record.
+    console.log(values.firstName); // string
+  },
+});
+```
+
+The key is also how you access the field through the `form` object — it's the exact same instance you passed in.
 
 ```ts
 form.fields.firstName === firstName; // true
+```
+
+Because each field is created on its own before the form, you can use one field's value inside another field's validation (e.g. a "confirm password" field).
+
+```ts
+const password = useField({ initialValue: "" });
+const confirmPassword = useField({
+  initialValue: "",
+  validate: (value) =>
+    value === password.state.value
+      ? { error: undefined, parsed: value }
+      : { error: "Passwords must match", parsed: undefined },
+});
+
+const form = useForm({ fields: { password, confirmPassword }, onSubmit });
 ```
 
 You can pass a validation function to `useField`, or use any validator that implements the [Standard Schema](https://standardschema.dev) spec — including [Zod](https://zod.dev), [Valibot](https://valibot.dev), and [ArkType](https://arktype.io). [Yup](https://github.com/jquense/yup) is also supported via its `validateSync` interface.
@@ -234,8 +329,6 @@ You can pass a validation function to `useField`, or use any validator that impl
 import { z } from "zod";
 
 const age = useField({
-  id: "age",
-  form,
   initialValue: "",
   validationSchema: z.coerce.number().min(0, "Age must be positive"),
 });
@@ -249,8 +342,6 @@ The library infers the input type from `initialValue` and the parsed/output type
 import { number } from "yup";
 
 const age = useField({
-  id: "age",
-  form,
   initialValue: "",
   validationSchema: number()
     .typeError("Age should be a number")
@@ -302,27 +393,26 @@ Each field has the `state`,`computed` and `actions` props.
 
 ### `useForm` / `createForm`
 
-| parameter  | type                         | required | description                                                                              |
-| ---------- | ---------------------------- | -------- | ---------------------------------------------------------------------------------------- |
-| `onSubmit` | (props: OnSubmitArg) => any; | true     | Function that will be ran when `form.actions.submitForm` is called if the form is valid. |
+| parameter  | type                         | required | description                                                                                                                              |
+| ---------- | ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`   | Record<string, Field>;       | true     | The complete record of fields for this form. The keys become the keys of `values`/`rawValues`/`fields`, and drive the type inference.    |
+| `onSubmit` | (props: OnSubmitArg) => any; | true     | Function that will be ran when `form.actions.submit` is called if the form is valid.                                                     |
 
 Returns a `Form` instance.
 
 ### `OnSubmitArg`
 
-| parameter   | type                   | description                                                                                                                                         |
-| ----------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fields`    | Record<string, Field>; | An object containing all the fields added to the form. Key's are `id`s passed to the `createField` prop.                                            |
-| `rawValues` | Record<string, any>;   | An object containing all the raw values from all the fields in the form.                                                                            |
-| `values`    | Record<string, any>;   | An object containing all the parsed values (returned from the `validate` or validated using the validation schema) from all the fields in the form. |
+| parameter   | type                  | description                                                                                                                                                                 |
+| ----------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`    | typeof `fields`       | The exact field record passed to `createForm`/`useForm` — same instances, keyed by the same keys.                                                                          |
+| `rawValues` | typed by field input  | The raw input value (`field.state.value`) of every field, keyed by field key. Typed automatically from each field's input type.                                            |
+| `values`    | typed by field output | The parsed/output value of every field, keyed by field key. Typed automatically from each field's parsed type (the value returned by `validate` / the validation schema).  |
 
 ### `useField` / `createField`
 
 | parameter          | type                                                                                        | required | description                                                                                                                                                                                                                                                       |
 | ------------------ | ------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | string                                                                                      | required | Unique identifier for the given field. When you add the field to a `form`, you can later access the field in `form.fields.<id>`                                                                                                                                   |
 | `initialValue`     | any                                                                                         | required | The initial value of the field. If you're using TypeScript, note that this field will be used to type the values you can set through `onChange`, so for optional fields consider using a cast to add the `undefined` type. (`initalValue: "" as "" \| undefined`) |
-| `form`             | Form (return value of `createForm`)                                                         | required | The form to which the newly created field should be added.                                                                                                                                                                                                        |
 | `validationSchema` | StandardSchemaV1 \| Yup.ValidationSchema                                                    | optional | A schema used to validate and parse the field value. Accepts any [Standard Schema](https://standardschema.dev) validator (Zod, Valibot, ArkType, etc.) or a [Yup](https://github.com/jquense/yup) schema. You can only set one of `validationSchema` and `validate`. |
 | `validate`         | (value: any) => { error?: undefined, parsed: any } \| { error: string, parsed?: undefined } | optional | Validation function used to validate and parse the value. It receives the value and must return and object with either `error` or `parsed` set                                                                                                                    |
 | `initialError`     | string                                                                                      | optional | Initial error for the field                                                                                                                                                                                                                                       |
@@ -334,7 +424,6 @@ Returns a `Field` instance
 | parameter                            | type                          | description                                                                                            |
 | ------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `state.errorOverride`                | string \| undefined           | Custom error message set on the field                                                                  |
-| `state.id`                           | string                        | `id` of the field                                                                                      |
 | `state.isFocused`                    | boolean                       | `true` if the field is focused, `false` otherwise                                                      |
 | `state.value`                        | any                           | Current value of the field                                                                             |
 | `state.wasEverBlurred`               | string                        | `true` if the field was ever blurred, `false` otherwise                                                |
@@ -362,5 +451,4 @@ Returns a `Field` instance
 | `computed.isError`                  | boolean                 | `true` if any field has `error` different from `undefined`                                                                                                                                                      |
 | `computed.isValid`                  | boolean                 | `true` if `isError` is `false`, `false` otherwise                                                                                                                                                               |
 | `computed.valueList`                | any[]                   | An array of all the values. Used internally, you shouldn't use this.                                                                                                                                            |
-| `actions.add`                       | (field: Field) => void  | Adds the provided field to the form                                                                                                                                                                             |
 | `actions.submit`                    | (value: any) => Promise | Sets `isSubmitting` to true, increases `submitCount`, for each field, sets the `wasEverFocused` and `wasEverBlurred` to `true`. Then, if `isError` is true does nothing, otherwise runs the `onSubmit` function |

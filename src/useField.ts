@@ -4,23 +4,50 @@ import {
   type CreateFieldArgs,
   type Field,
   type InferParsed,
+  type InferValidateParsed,
+  type LooseValidationFn,
   type ValidationSchema,
 } from "./createField";
 
+// Overload: a `validate` function is provided — output type is inferred from it.
 export function useField<
   ValueType,
-  Schema extends ValidationSchema<unknown> | undefined = undefined,
-  ParsedType = InferParsed<Schema, ValueType>,
+  Validate extends LooseValidationFn<ValueType>,
 >(
-  args: CreateFieldArgs<
-    ValueType,
-    ParsedType,
-    Schema extends ValidationSchema<ParsedType> ? Schema : undefined
-  >,
+  args: {
+    initialValue: ValueType;
+    initialError?: string | undefined;
+    validate: Validate;
+    validationSchema?: undefined;
+  },
+  deps?: ReadonlyArray<unknown>,
+): Field<ValueType, InferValidateParsed<Validate>>;
+
+// Overload: a validation schema is provided — output type is inferred from it.
+export function useField<ValueType, Schema extends ValidationSchema<unknown>>(
+  args: {
+    initialValue: ValueType;
+    initialError?: string | undefined;
+    validate?: undefined;
+    validationSchema: Schema;
+  },
+  deps?: ReadonlyArray<unknown>,
+): Field<ValueType, InferParsed<Schema, ValueType>>;
+
+// Overload: no validation — the field parses to its own input value.
+export function useField<ValueType>(
+  args: {
+    initialValue: ValueType;
+    initialError?: string | undefined;
+    validate?: undefined;
+    validationSchema?: undefined;
+  },
+  deps?: ReadonlyArray<unknown>,
+): Field<ValueType, ValueType>;
+
+export function useField(
+  args: CreateFieldArgs<any, any, any>,
   deps: ReadonlyArray<unknown> = [],
-): Field<ValueType, ParsedType> {
-  return useMemoOne(() => createField(args), deps) as Field<
-    ValueType,
-    ParsedType
-  >;
+): Field<any, any> {
+  return useMemoOne(() => createField(args as any), deps);
 }

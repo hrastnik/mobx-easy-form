@@ -1,6 +1,11 @@
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { useMemoOne } from "./useMemoOne";
-import { createForm, type CreateFormArgs, type Form } from "./createForm";
+import {
+  createForm,
+  type CreateFormArgs,
+  type Form,
+  type FormFields,
+} from "./createForm";
 
 function useEvent<Args extends unknown[], ReturnValue>(
   handler: (...args: Args) => ReturnValue,
@@ -14,10 +19,10 @@ function useEvent<Args extends unknown[], ReturnValue>(
   return useCallback((...args: Args) => handlerRef.current(...args), []);
 }
 
-export function useForm(
-  args: CreateFormArgs,
+export function useForm<Fields extends FormFields>(
+  args: CreateFormArgs<Fields>,
   deps: ReadonlyArray<unknown> = [],
-): Form {
+): Form<Fields> {
   const onSubmit = useEvent(args.onSubmit);
-  return useMemoOne(() => createForm({ ...args, onSubmit }), deps);
+  return useMemoOne(() => createForm<Fields>({ ...args, onSubmit }), deps);
 }

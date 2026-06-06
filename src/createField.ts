@@ -7,6 +7,30 @@ export type ValidationFn<ValueType, ParsedType = ValueType> = (
   | { error?: undefined; parsed: ParsedType }
   | { error: Error | string; parsed?: undefined };
 
+/**
+ * The validate function shape used for *inference*. It deliberately leaves the
+ * success `parsed` as `unknown` so that a supplied validate function is never
+ * constrained to a pre-decided `ParsedType` — instead the parsed/output type is
+ * read back out of the function's return via {@link InferValidateParsed}.
+ */
+export type LooseValidationFn<ValueType> = (
+  value: ValueType
+) =>
+  | { error?: undefined; parsed: unknown }
+  | { error: Error | string; parsed?: undefined };
+
+/**
+ * Extracts the parsed/output type from a validate function's *success* branch
+ * (the one where `error` is absent/undefined). The error branch is ignored, so
+ * a `{ error: "..." }` return never leaks `undefined` into the output type —
+ * while a success branch that genuinely returns `undefined` is preserved.
+ */
+export type InferValidateParsed<Fn> = Fn extends (value: never) => infer Result
+  ? Result extends { error?: undefined; parsed: infer ParsedType }
+    ? ParsedType
+    : never
+  : never;
+
 type YupLikeSchema<ParsedType> = {
   validateSync(
     value: unknown,
@@ -25,28 +49,32 @@ export type InferParsed<Schema, Fallback> =
       ? P
       : Fallback;
 
+/**
+ * Resolves a field's parsed/output type: from the validation schema if present,
+ * otherwise from the validate function's success return, otherwise the input
+ * type (a field with no validation parses to its own value).
+ */
+export type FieldParsed<ValueType, Validate, Schema> =
+  Schema extends ValidationSchema<unknown>
+    ? InferParsed<Schema, ValueType>
+    : Validate extends LooseValidationFn<ValueType>
+      ? InferValidateParsed<Validate>
+      : ValueType;
+
 export type CreateFieldArgs<
   ValueType,
-  ParsedType = ValueType,
-  Schema extends ValidationSchema<ParsedType> | undefined =
-    | ValidationSchema<ParsedType>
+  Validate extends LooseValidationFn<ValueType> | undefined =
+    | LooseValidationFn<ValueType>
+    | undefined,
+  Schema extends ValidationSchema<unknown> | undefined =
+    | ValidationSchema<unknown>
     | undefined,
 > = {
-  id: string;
   initialValue: ValueType;
   initialError?: string | undefined;
-  form: {
-    actions: {
-      add(field: Field<any, any>): void;
-      submit(): unknown;
-    };
-  };
 } & (
   | { validate?: undefined; validationSchema?: undefined }
-  | {
-      validate: ValidationFn<ValueType, ParsedType>;
-      validationSchema?: undefined;
-    }
+  | { validate: Validate; validationSchema?: undefined }
   | { validate?: undefined; validationSchema: Schema }
 );
 
@@ -65,30 +93,54 @@ function isYupLikeSchema<T>(schema: unknown): schema is YupLikeSchema<T> {
   );
 }
 
+// Overload: a `validate` function is provided — the parsed/output type is read
+// out of the function's success-branch return, so narrowing inside `validate`
+// (e.g. dropping `undefined`) is reflected in the output type.
 export function createField<
   ValueType,
-  Schema extends ValidationSchema<unknown> | undefined = undefined,
-  ParsedType = InferParsed<Schema, ValueType>,
->(
-  args: CreateFieldArgs<
-    ValueType,
-    ParsedType,
-    Schema extends ValidationSchema<ParsedType> ? Schema : undefined
-  >
-): Field<ValueType, ParsedType> {
-  const { id, initialValue, initialError, form } = args;
-  const validate = args.validate;
+  Validate extends LooseValidationFn<ValueType>,
+>(args: {
+  initialValue: ValueType;
+  initialError?: string | undefined;
+  validate: Validate;
+  validationSchema?: undefined;
+}): Field<ValueType, InferValidateParsed<Validate>>;
+
+// Overload: a validation schema is provided — the parsed/output type is read
+// from the schema (Standard Schema output, or Yup's `validateSync` return).
+export function createField<
+  ValueType,
+  Schema extends ValidationSchema<unknown>,
+>(args: {
+  initialValue: ValueType;
+  initialError?: string | undefined;
+  validate?: undefined;
+  validationSchema: Schema;
+}): Field<ValueType, InferParsed<Schema, ValueType>>;
+
+// Overload: no validation — the field parses to its own input value.
+export function createField<ValueType>(args: {
+  initialValue: ValueType;
+  initialError?: string | undefined;
+  validate?: undefined;
+  validationSchema?: undefined;
+}): Field<ValueType, ValueType>;
+
+export function createField(
+  args: CreateFieldArgs<any, any, any>
+): Field<any, any> {
+  const { initialValue, initialError } = args;
+  const validate = args.validate as ValidationFn<any, any> | undefined;
   const validationSchema = args.validationSchema as
-    | ValidationSchema<ParsedType>
+    | ValidationSchema<any>
     | undefined;
 
-  const runValidation = getValidateFunction<ValueType, ParsedType>(
+  const runValidation = getValidateFunction<any, any>(
     validate,
     validationSchema
   );
 
   const state = observable({
-    id,
     errorOverride: initialError,
     value: initialValue,
     isFocused: false,
@@ -97,7 +149,7 @@ export function createField<
   });
 
   const computed = observable({
-    get parsed(): ParsedType | undefined {
+    get parsed(): unknown {
       const result = runValidation(state.value);
       if (result.error) return undefined;
       return result.parsed;
@@ -159,7 +211,7 @@ export function createField<
       state.wasEverBlurred = true;
     }),
 
-    onChange: action(function onChange(value: ValueType) {
+    onChange: action(function onChange(value: unknown) {
       if (state.errorOverride) state.errorOverride = undefined;
       state.value = value;
     }),
@@ -169,9 +221,7 @@ export function createField<
     }),
   };
 
-  const field: Field<ValueType, ParsedType> = { state, computed, actions };
-
-  form.actions.add(field);
+  const field: Field<any, any> = { state, computed, actions };
 
   return field;
 }
@@ -230,7 +280,6 @@ function getValidateFunction<ValueType, ParsedType>(
 
 export interface Field<ValueType, ParsedType = ValueType> {
   state: {
-    id: string;
     errorOverride: undefined | string;
     value: ValueType;
     isFocused: boolean;
