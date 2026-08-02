@@ -22,3 +22,40 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  # Proves the `mobx` / `react` peer ranges declared in package.json. Each cell
+  # swaps in one supported peer version and re-runs the suite (including the
+  # reactivity tests, which are what actually exercise the MobX integration).
+  compat:
+    name: mobx ${{ matrix.mobx }} / react ${{ matrix.react }}
+    runs-on: ubuntu-latest
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { mobx: "5", react: "19" }
+          - { mobx: "6", react: "19" }
+          - { mobx: "7", react: "19" }
+          - { mobx: "7", react: "18" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install peer versions under test
+        run: >-
+          npm install --no-save --no-audit --no-fund
+          mobx@${{ matrix.mobx }}
+          react@${{ matrix.react }}
+          react-dom@${{ matrix.react }}
+          @types/react@${{ matrix.react }}
+          @types/react-dom@${{ matrix.react }}
+
+      - run: npm run typecheck
+      - run: npm test

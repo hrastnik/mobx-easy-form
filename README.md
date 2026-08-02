@@ -50,6 +50,20 @@ npm install mobx-easy-form
 yarn add mobx-easy-form
 ```
 
+### Compatibility
+
+| Peer       | Supported                                    |
+| ---------- | -------------------------------------------- |
+| `mobx`     | 5.x, 6.x, **7.x**                             |
+| `react`    | 18.x, 19.x (only needed for the hooks)        |
+| Node       | 18+                                           |
+
+MobX Easy Form only uses `observable`, `action` and `runInAction`, which behave
+identically across every MobX major — so upgrading MobX (including to 7.x)
+requires no changes here. Each supported combination is verified in CI against
+the full test suite, including reactivity tests that assert the computeds are
+real MobX computeds (cached and reactive) on every version.
+
 ## Quick start with React
 
 ```tsx
